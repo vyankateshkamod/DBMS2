@@ -1,0 +1,119 @@
+Algorithm
+
+1. **Create two tables**:
+    - `borrower`: stores info about who borrowed books.
+    - `fine`: stores fines if the borrower returns the book late.
+2. **Insert borrower records** with issue dates.
+3. **Create a procedure** `return_book(rno)` that:
+    - Fetches the issue date for the given `rollno`.
+    - Calculates the number of days since the issue.
+    - Applies fine logic:
+        - If returned within 15 days → no fine.
+        - If 15–30 days → ₹5 per day.
+        - If >30 days → ₹50 per day.
+    - Inserts the fine (if applicable).
+    - Updates status to "Returned" in `borrower` table.
+4. **Call the procedure** with a roll number to simulate returning a book.
+
+-----------------------------------------------------------------------------------------------------------------
+Step 1: Create the borrower Table
+
+
+CREATE TABLE borrower (
+    rollno INT PRIMARY KEY,            -- Unique ID for each borrower
+    name VARCHAR(20),                   -- Name of the borrower
+    dateofissue DATE,                   -- Date the book was issued
+    status VARCHAR(20)                  -- Status of the book ("issued" or "returned")
+);
+
+
+Step 2: Create the fine Table
+
+
+CREATE TABLE fine (
+    rollno INT,                         -- Roll number of the borrower
+    date DATE,                          -- Date the fine is recorded
+    amount INT,                         -- Fine amount
+    FOREIGN KEY (rollno) REFERENCES borrower(rollno) -- Links to borrower table.The rollno column in the fine table must match a rollno that already exists in the borrower table.
+);
+
+
+Step 3: Insert Sample Data (Optional for Testing)
+
+INSERT INTO borrower VALUES (1, 'John', '2023-08-05', 'issued');
+INSERT INTO borrower VALUES (2, 'Alice', '2024-07-03', 'issued');
+INSERT INTO borrower VALUES (3, 'Max', '2024-04-07', 'issued');
+INSERT INTO borrower VALUES (4, 'Kimberly', '2024-05-06', 'issued');
+
+Step 4: Create the p_fine Procedure
+
+DELIMITER //
+
+CREATE PROCEDURE return_book(IN rno INT)
+BEGIN
+    DECLARE d1 DATE;  --to store the book's issue date.
+    DECLARE daycnt INT;
+    DECLARE fine_amt INT;
+
+    SELECT dateofissue INTO d1 
+    FROM borrower
+    WHERE rollno = rno;
+
+    SELECT DATEDIFF(NOW(), d1) INTO daycnt;
+
+    IF daycnt >= 15 AND daycnt <= 30 THEN
+        SET fine_amt = daycnt * 5;
+    ELSEIF daycnt > 30 THEN
+        SET fine_amt = daycnt * 50;
+    ELSE
+        SET fine_amt = 0;
+    END IF;
+
+    IF fine_amt > 0 THEN
+        INSERT INTO fine (rollno, date, amount)
+        VALUES (rno, NOW(), fine_amt);
+    END IF;
+
+    UPDATE borrower
+    SET status = "Returned"  --Updates the borrower's status to "Returned" to indicate that the book has been returned.
+    WHERE rollno = rno;
+END //
+
+DELIMITER ;
+
+Steps to view output after calling the procedure:
+
+1. Call the procedure:
+CALL return_book(1); -- Replace 1 with a real roll number from your `borrower` table
+
+2. Check the borrower table to verify status is updated:
+SELECT * FROM borrower WHERE rollno = 1;
+
+3.Check the fine table to see if a fine was added:
+SELECT * FROM fine WHERE rollno = 1;
+
+-----------------------------------------------------------------------------------------------------------------
+A. DELIMITER //
+Each SQL line ends with ;, but you don’t want the MySQL interpreter to think the procedure ends after the first ;. So you change the delimiter before and after like this
+
+B. DELIMITER ; 
+It restores the default delimiter
+(semicolon) after you've finished defining a procedure or function.
+
+C. DELIMITER
+used to separate different code blocks
+
+D.  SELECT dateofissue INTO d1 
+    FROM borrower
+    WHERE rollno = rno;
+
+- SELECT ... INTO: This form is used to select a value from a table and store it directly into a variable.
+- dateofissue: A column from the `borrower` table.
+- d1: A variable declared in the PL/SQL block where the result will be stored.
+- rollno = rno: The condition used to filter the row, where `rno` is likely a variable.
+
+E. SELECT DATEDIFF(NOW(), d1) INTO daycnt;
+- DATEDIFF(NOW(), d1): Calculates the number of days between the current date/time (`NOW()`) and the value in variable `d1`.
+- INTO daycnt: Stores the result into the variable `daycnt`.
+
+

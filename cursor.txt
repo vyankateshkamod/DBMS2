@@ -1,0 +1,120 @@
+ 1. Use your database
+USE TEA25;
+
+2. Create the tables
+
+DROP TABLE IF EXISTS O_RollCall;
+CREATE TABLE O_RollCall (
+    rollno INT PRIMARY KEY,
+    name VARCHAR(30)
+);
+
+DROP TABLE IF EXISTS N_RollCall;
+CREATE TABLE N_RollCall (
+    n_rollno INT PRIMARY KEY,
+    n_name VARCHAR(30)
+);
+
+3. Insert data into O_RollCall
+
+INSERT INTO O_RollCall (rollno, name)
+VALUES (1, 'Piyush'), (2, 'Vivek'), (3, 'Kushal');
+
+4. Create the stored procedure to merge (skip duplicates)
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS merge_rollcall;
+
+CREATE PROCEDURE merge_rollcall()
+BEGIN
+    DECLARE c_rollno INT;
+    DECLARE c_name VARCHAR(30);
+    DECLARE done INT DEFAULT FALSE;
+
+    -- Cursor to go through O_RollCall table
+    DECLARE cur CURSOR FOR
+        SELECT rollno, name FROM O_RollCall;
+
+    -- Handler for end of result set
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO c_rollno, c_name; //Moves through the result set one row at a time.
+
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Insert only if the rollno doesn't already exist in N_RollCall
+        IF NOT EXISTS (
+            SELECT 1 FROM N_RollCall WHERE n_rollno = c_rollno
+        ) THEN
+            INSERT INTO N_RollCall(n_rollno, n_name)
+            VALUES (c_rollno, c_name);
+        END IF;
+
+    END LOOP;
+
+    CLOSE cur;
+END;
+//
+
+DELIMITER ;
+
+
+
+ 5. Call the procedure
+CALL merge_rollcall();
+
+6. Check results in N_RollCall
+SELECT * FROM N_RollCall;
+
+----------------------------------------------------------------------------------------------------------
+A cursor in SQL (and PL/SQL or MySQL procedures) is a database object used to retrieve, navigate, and process rows from a result set one at a time.
+Normally, SQL processes sets of data all at once (set-based operations). But sometimes, you need to go row by row
+
+Think of a cursor as a pointer or bookmark that helps you go through a list (result set) line by line, like reading a book one page at a time.
+
+Implicit Cursor - Automatically created by the database when a DML (INSERT, UPDATE, DELETE) or SELECT INTO is executed. You don't see or control it directly.
+
+Explicit Cursor - You declare it manually using CURSOR...IS SELECT..., giving you full control over opening, fetching, and closing it
+
+Cursor FOR Loop (PL/SQL) - Simplifies looping through a cursor. It automatically handles open, fetch, and close. (Note: Not in MySQL.)
+
+
+Basic Flow of a Cursor
+Declare the cursor with a SELECT query.
+
+Open the cursor to access the result set.
+
+Fetch rows one-by-one into variables.
+
+Process each row with logic (IF, INSERT, etc.).
+
+Close the cursor to release memory.
+
+Parameterized Cursor (PL/SQL) - A cursor that takes input parameters, letting you fetch rows based on a given condition. (Not in MySQL.)
+
+
+
+Key Steps:
+Created two tables:
+
+1. 
+O_RollCall(rollno, name) — contains original data
+
+N_RollCall(n_rollno, n_name) — starts empty or partially filled
+
+2.
+Wrote a stored procedure (merge_rollcall) that:
+
+Uses a cursor to loop through all rows in O_RollCall
+
+Checks if each roll number already exists in N_RollCall
+
+Inserts the row only if it's not already present (avoiding duplicates)
+
+3.
+Executed the procedure and verified that only new rows were inserted into N_RollCall.

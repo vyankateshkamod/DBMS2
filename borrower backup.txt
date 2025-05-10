@@ -1,0 +1,118 @@
+Assignment No:-04
+Div:-A Rollno:-64
+mysql> use Lab64;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+Database changed
+mysql> show tables;
++------------------------+
+| Tables_in_Lab64 |
++------------------------+
+| borrower |
+| fine |
++------------------------+
+2 rows in set (0.00 sec)
+mysql> select* from borrower;
+Empty set (0.00 sec)
+mysql> select * from fine;
+Empty set (0.00 sec)
+mysql> select * from borrower;
+Empty set (0.00 sec)
+mysql> drop table borrower;
+Query OK, 0 rows affected (0.19 sec)
+mysql> create table borrower(rollno int primary key,name
+varchar(20),dateofissue date,status varchar(20));
+Query OK, 0 rows affected (0.33 sec)
+mysql> insert into borrower values(1,"prathamesh",'2023-08-05',"issued");
+Query OK, 1 row affected (0.05 sec)
+mysql> select*from borrower;
++--------+------------+-------------+--------+
+| rollno | name | dateofissue | status |
++--------+------------+-------------+--------+
+| 1 | prathamesh | 2023-08-05 | issued |
++--------+------------+-------------+--------+
+1 row in set (0.00 sec)
+mysql> insert into borrower values(2,"Arjun",'2024-07-03',"pending");
+Query OK, 1 row affected (0.04 sec)
+mysql> insert into borrower values(3,"Mohit",'2024-04-07',"issued");
+Query OK, 1 row affected (0.05 sec)
+mysql> insert into borrower values(4,"kshitij",'2024-05-06',"pending");
+Query OK, 1 row affected (0.04 sec)
+mysql> insert into fine values(2,'2024-08-05',100);
+Query OK, 1 row affected (0.05 sec)
+mysql> insert into fine values(4,'2024-08-05',200);
+Query OK, 1 row affected (0.04 sec)
+mysql> select * from fine;
++--------+------------+--------+
+| rollno | date | amount |
++--------+------------+--------+
+| 2 | 2024-08-05 | 100 |
+| 4 | 2024-08-05 | 200 |
++--------+------------+--------+
+2 rows in set (0.00 sec)
+mysql> truncate table fine;
+Query OK, 0 rows affected (0.22 sec)
+mysql> select * from fine;
+Empty set (0.00 sec)
+mysql> drop procedure if exists p_fine;
+ -> //
+Query OK, 0 rows affected, 1 warning (0.04 sec)
+mysql> delimiter //
+mysql> create procedure p_fine(IN rno int)
+ -> begin
+ -> declare d1 date;
+ -> declare daycnt int;
+ -> declare fine_amt int;
+ -> select dateofissue into d1 from borrower where rollno=rno;
+ -> select DATEDIFF (now(),d1) into daycnt;
+ -> if(daycnt>=15 and daycnt<=30) then set fine_amt=daycnt*5;
+ -> insert into fine(rollno,date,amount)
+ -> values(rno,now(),fine_amt);
+ -> update borrower set status="Returned" where rollno=rno;
+ -> elseif(daycnt>30) then set fine_amt=daycnt*50;
+ -> insert into fine values(rno,now(),fine_amt);
+ -> update borrower set status="Returned" where rollno=rno;
+ -> else
+ -> update borrower set status="Returned" where rollno=rno;
+ -> end if;
+ -> end ;
+ -> //
+Query OK, 0 rows affected (0.00 sec)
+mysql> call p_fine(1,2,3,4);
+ -> //
+ERROR 1318 (42000): Incorrect number of arguments for PROCEDURE
+Ainwaleplsql.p_fine; expected 1, got 4
+mysql> call p_fine(1);
+ -> //
+Query OK, 1 row affected (0.10 sec)
+mysql> call p_fine(2);
+ -> //
+Query OK, 1 row affected (0.13 sec)
+mysql> call p_fine(3);
+ -> //
+Query OK, 1 row affected (0.13 seec)
+mysql> call p_fine(4);
+ -> //
+Query OK, 1 row affected (0.15 sec)
+mysql> select * from fine;
+ -> //
++--------+------------+--------+
+| rollno | date | amount |
++--------+------------+--------+
+| 1 | 2024-08-05 | 18300 |
+| 2 | 2024-08-05 | 1650 |
+| 3 | 2024-08-05 | 6000 |
+| 4 | 2024-08-05 | 4550 |
++--------+------------+--------+
+4 rows in set (0.00 sec)
+mysql> select * from borrower;
+ -> //
++--------+------------+-------------+----------+
+| rollno | name | dateofissue | status |
++--------+------------+-------------+----------+
+| 1 | prathamesh | 2023-08-05 | Returned |
+| 2 | Arjun | 2024-07-03 | Returned |
+| 3 | Mohit | 2024-04-07 | Returned |
+| 4 | kshitij | 2024-05-06 | Returned |
++--------+------------+-------------+----------+
+4 rows in set (0.00 sec)

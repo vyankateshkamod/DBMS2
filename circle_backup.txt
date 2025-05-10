@@ -1,0 +1,32 @@
+create or use database first
+CREATE DATABASE your_database_name; or USE your_database_name;
+
+SHOW DATABASES;
+
+
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS FIND_CIRCLE_AREA //
+
+CREATE PROCEDURE FIND_CIRCLE_AREA()
+BEGIN
+    DECLARE R INT DEFAULT 5;
+    DECLARE A FLOAT;
+
+    label1: LOOP
+        SET A = 3.14 * R * R;
+        INSERT INTO AREAS(RADIUS, AREA) VALUES (R, A);
+        SET R = R + 1;
+        IF R > 10 THEN
+            LEAVE label1;
+        END IF;
+    END LOOP;
+END //
+
+DELIMITER ;
+
+
+CALL FIND_CIRCLE_AREA();
+
+
+SELECT * FROM AREAS;

@@ -1,0 +1,152 @@
+#  In MongoDB, a collection is a group of related documents, similar to a table in relational databases like MySQL. A collection holds documents . Each document is a JSON-  like object
+
+#  A JSON format (JavaScript Object Notation) is a lightweight, text-based way to store and exchange data . In MongoDB, a document is stored in BSON (binary JSON) 
+
+#  create  a database -  use database_name
+
+#  create collection -  db.createCollection("Collection_name")
+
+
+1. Create Operations
+// Inserting a single document into a "students" collection
+db.students.insertOne({
+  name: "John Doe",
+  age: 21,
+  subjects: ["Math", "English"],
+  grade: "A",
+  active: true
+})
+
+// Inserting multiple documents
+db.students.insertMany([
+  { name: "Alice Smith", age: 22, subjects: ["History", "Art"], grade: "B", active: true },
+  { name: "Bob Brown", age: 20, subjects: ["Physics", "Chemistry"], grade: "A", active: false }
+])
+
+
+2. Read Operations
+// Retrieve all documents in the collection
+db.students.find()
+
+// Retrieve students with a grade "A" or age above 21
+db.students.find({
+  $or: [{ grade: "A" }, { age: { $gt: 21 } }]
+})
+
+// Retrieve students who are active and enrolled in "Math"
+db.students.find({
+  $and: [{ active: true }, { subjects: "Math" }]
+})
+
+// Retrieve students who are not active
+db.students.find({
+  active: { $not: { $eq: true } }
+})
+
+3. Update Operations
+
+// Update a single student's grade based on their name
+db.students.updateOne(
+  { name: "John Doe" },
+  { $set: { grade: "A+" } }
+)
+
+// Update all inactive students to active
+db.students.updateMany(
+  { active: false },
+  { $set: { active: true } }
+)
+
+// Using the save method to replace the entire document
+A. modern versions of MongoDB, particularly with the new mongosh shell, the method db.collection.save() is no longer supported.
+db.students.save({
+  _id: ObjectId("specificObjectId"), // Make sure to include the _id of the document to update it
+  name: "John Doe",
+  age: 21,
+  subjects: ["Math", "English", "Physics"],
+  grade: "A+",
+  active: true
+})
+
+B. Use insertOne() or replaceOne() Instead . If you're updating an existing document (with the same _id), use:
+db.students.replaceOne(
+  { _id: ObjectId('681b6d2244c695d227c73bfa') },
+  {
+    _id: ObjectId('681b6d2244c695d227c73bfa'),
+    name: 'John',
+    age: 21,
+    subjects: ["Math", "English", "physics"],
+    grade: "A+",
+    active: true
+  }
+)
+
+
+4. Delete Operations
+
+
+// Delete a single student by name
+db.students.deleteOne({ name: "Bob Brown" })
+
+// Delete all students who are not active
+db.students.deleteMany({ active: false })
+
+# save method:-
+
+In MongoDB, the `save` method is used to either insert a new document or update an existing document within a collection. The behavior of the `save` method depends on whether the document has an `_id` field:
+
+1. **If the document has an `_id` field** and matches an existing document in the collection, `save` will perform an update on that document.
+2. **If the document does not have an `_id` field** or its `_id` doesn’t match any document, `save` will insert the document as a new entry.
+
+> Note: The save method is specific to the MongoDB shell (mongo) and older versions of the MongoDB drivers. In newer versions, save is generally replaced with insertOne, insertMany, updateOne, or updateMany depending on the required operation.
+> 
+
+### Syntax
+
+```jsx
+
+db.collection.save(document)
+
+```
+
+### Examples
+
+1. **Updating an Existing Document**
+    
+    If you use `save` with an existing `_id`, it updates the document with that `_id`.
+    
+    ```jsx
+    
+    db.students.save({
+      _id: ObjectId("60f4eabc6c4a4f12345a6d7b"),
+      name: "John Doe",
+      grade: "A+",
+      active: true
+    })
+    
+    ```
+    
+    Here, if a document with `_id: 60f4eabc6c4a4f12345a6d7b` already exists, it will be replaced with the new values. If it doesn't exist, MongoDB will insert this document as a new entry.
+    
+2. **Inserting a New Document**
+    
+    If the document lacks an `_id` field, `save` will insert it as a new document and automatically assign it a unique `_id`.
+    
+    ```jsx
+    javascript
+    Copy code
+    db.students.save({
+      name: "Alice Brown",
+      grade: "B",
+      active: true
+    })
+    
+    ```
+    
+    Since this document doesn’t have an `_id`, MongoDB will create a new document with an automatically generated `_id`.
+    
+
+### Key Points to Remember
+
+- `save` is often replaced by specific `insert` and `update` methods in modern MongoDB applications.
+- For better control, use `insertOne`, `insertMany`, `updateOne`, or `updateMany` methods, as these offer more flexibility and options for handling different scenarios.

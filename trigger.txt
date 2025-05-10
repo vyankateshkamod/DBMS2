@@ -1,0 +1,161 @@
+1. Create Tables
+CREATE DATABASE IF NOT EXISTS TEA55;
+USE TEA55;
+
+-- Main table
+CREATE TABLE lib_book (
+    bid INT,
+    bname VARCHAR(20),
+    qty INT
+);
+
+-- Audit table
+CREATE TABLE lib_audit (
+    bid INT,
+    bname VARCHAR(20),
+    qty INT
+);
+
+ 2. Insert Sample Records
+INSERT INTO lib_book (bid, bname, qty)
+VALUES
+    (1, 'GOT', 10),
+    (2, 'Harry', 20),
+    (3, 'COTE', 30),
+    (4, 'abc', 40);
+
+3. Create Triggers
+🔁 After DELETE Trigger
+
+DELIMITER //
+
+CREATE TRIGGER Make_audit1
+AFTER DELETE ON lib_book
+FOR EACH ROW
+BEGIN
+    INSERT INTO lib_audit (bid, bname, qty)
+    VALUES (OLD.bid, OLD.bname, OLD.qty);
+END;
+//
+
+DELIMITER ;
+
+🔁 After UPDATE Trigger
+DELIMITER //
+
+CREATE TRIGGER Make_audit2
+AFTER UPDATE ON lib_book
+FOR EACH ROW
+BEGIN
+    INSERT INTO lib_audit (bid, bname, qty)
+    VALUES (OLD.bid, OLD.bname, OLD.qty);
+END;
+//
+
+DELIMITER ;
+
+Example Usage
+Delete:
+DELETE FROM lib_book WHERE bid = 1;
+
+Update:
+UPDATE lib_book SET bname = 'harry potter' WHERE bid = 2;
+
+View Audit Table:
+SELECT * FROM lib_audit;
+
+------------------------------------------------------------------------------------------------------
+A trigger is a stored procedure in a database that is automatically executed or fired when certain events occur on a specified table or view.
+
+Think of it like a "watchdog" — it watches for events like INSERT, UPDATE, or DELETE and performs an action (like logging, enforcing rules, etc.) when those events happen.
+
+Types of Triggers
+1. Based on the Action Time
+BEFORE - Trigger fires before the operation is executed on the table.
+AFTER - Trigger fires after the operation is executed on the table.
+
+2. Based on the DML Event
+| Type       | Description                                     |
+| ---------- | ----------------------------------------------- |
+| **INSERT** | Trigger fires when a new row is inserted.       |
+| **UPDATE** | Trigger fires when an existing row is modified. |
+| **DELETE** | Trigger fires when a row is deleted.            |
+
+3. Based on the Execution Scope
+| Type                | Description                                                                  |
+| ------------------- | ---------------------------------------------------------------------------- |
+| **Row-Level**       | Fires **once for each row** affected by the DML event. Uses `OLD` and `NEW`. |
+| **Statement-Level** | Fires **once per DML statement**, regardless of how many rows are affected.  |
+
+MySQL only supports row-level triggers.
+
+Some databases like Oracle and PostgreSQL support statement-level triggers.
+
+EXTRA :-
+DELETE FROM lib_book WHERE bid = 1;
+- The row with bid = 1 is deleted from the lib_book table.
+
+- Because you have an AFTER DELETE trigger (Make_audit1) on lib_book, the deleted row's data is inserted into the lib_audit table.
+
+------------------------------------------------------------------------------------------------------------
+IN PRACTICAL :-
+ What is a Trigger?
+A trigger is a special type of stored procedure that automatically executes (fires) when a specific event occurs in the database. These events typically include INSERT, UPDATE, or DELETE operations on a table.
+
+Triggers are used for:
+
+Maintaining audit trails
+
+Enforcing business rules
+
+Automatically updating related data
+
+🛠️ Types of Triggers (Used in This Practical)
+AFTER DELETE Trigger
+
+Executes after a row is deleted from the table.
+
+Used here to record deleted records into the audit table.
+
+AFTER UPDATE Trigger
+
+Executes after a row is updated in the table.
+
+Used here to save the old version of the updated row in the audit table.
+
+Row-Level Triggers
+
+Triggers that fire once for each affected row.
+
+In MySQL, all triggers are row-level.
+
+🧪 Steps Performed in the Practical
+Selected the Database:
+The database TEA55 was selected for operations.
+
+Created the Main Table:
+A table lib_book was created to store book information (bid, bname, qty).
+
+Created the Audit Table:
+Another table lib_audit was created to store old values of deleted or updated records for auditing purposes.
+
+Inserted Sample Data:
+A few rows of book records were inserted into lib_book for testing the triggers.
+
+Created an AFTER DELETE Trigger:
+A trigger named Make_audit1 was created. It executes after a row is deleted from lib_book and inserts the old row's data into lib_audit.
+
+Performed a DELETE Operation:
+A row with bid = 1 was deleted. The trigger automatically inserted this row's data into lib_audit.
+
+Created an AFTER UPDATE Trigger:
+Another trigger named Make_audit2 was created. It executes after a row is updated and inserts the old version of the updated row into lib_audit.
+
+Performed an UPDATE Operation:
+The name of the book with bid = 2 was updated. The trigger automatically logged the previous version into lib_audit.
+
+Verified the Audit Table:
+By selecting data from lib_audit, it was confirmed that deleted and updated records were successfully logged.
+
+✅ Conclusion:
+In this practical, you implemented AFTER DELETE and AFTER UPDATE row-level triggers to maintain an audit trail of changes made to the lib_book table. This is a common approach in real-world applications where maintaining data integrity and history is important.

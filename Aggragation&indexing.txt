@@ -1,0 +1,191 @@
+## Execution:-
+
+### Step 1: Store Data
+db.createCollection("orders");
+
+
+db.orders.insertMany([
+{
+  "orderID": 12345,
+  "customer": "John Doe",
+  "product": "Laptop",
+  "quantity": 2,
+  "price": 1000,
+  "status": "shipped",
+  "date": ISODate("2024-10-15")
+} ,
+
+
+{
+  "orderID": 6789,
+  "customer": "Edward Jacob",
+  "product": "Laptop",
+  "quantity": 3,
+  "price": 1000,
+  "status": "shipped",
+  "date": ISODate("2025-05-10")
+}
+
+]);
+
+### Step 2: Create an Index
+
+db.orders.createIndex({ status: 1, date: -1 })
+
+### Step 3: Aggregation Query
+
+db.orders.aggregate([
+  { 
+    $match: { status: "shipped" } 
+  },
+  { 
+    $project: { 
+      date: 1,
+      orderID: 1,  
+      totalAmount: { $multiply: ["$quantity", "$price"] }
+    }
+  },
+  { 
+    $sort: { date: -1 }
+  },
+  { 
+    $group: { 
+      _id: "$orderID",  
+      totalRevenue: { $sum: "$totalAmount" }
+    }
+  }
+]);
+
+THEORY ------------------------------------------------------------------------------------------------------------------------------------------------
+- MongoDB uses `$` to indicate **operators** or **commands** in aggregation, queries, and updates.
+- Operators tell MongoDB to perform certain actions, like `$match` for filtering, `$group` for grouping data, `$sum` for summing values, etc.
+- `"$price"` means "use the value of the `price` field" in a document
+- `$` is also used in **logical and comparison expressions** like `$gt` (greater than), `$lt` (less than), and `$and` (logical AND).
+- **`"$sum"`** (with quotes) **means take the value of the `sum` field**.
+- **`$sum`** (without quotes) **means perform the sum operation**.
+
+AGGREGATION :-
+
+Aggregation lets you **collect** and **process data** . You pass the data through **pipeline stages** where each stage performs a specific operation on the data (like filtering, grouping, or summing) and passes the result to the next stage.
+
+This series of steps (filter → group → sort) is an aggregation pipeline that summarizes your data in one query.
+**Pipeline Stages**: Aggregation pipelines are sequences of stages, where each stage performs an operation on the data and passes the result to the next stage. 
+
+Some pipeline stages are :-
+
+1. $match:  ( Filtering )
+
+Example: You have a collection of orders and only want the ones where `status` is "completed".
+
+
+{ $match: { status: "completed" } }
+
+
+
+2. $group: ( Grouping and Aggregating )
+
+- When to Use: Use `$group` to group documents by a specific field and perform calculations like counting, summing, or averaging within each group.
+- Example: You want the total revenue from each store.
+    
+    
+    
+    { $group: { _id: "$store", totalRevenue: { $sum: "$amount" } } }
+    
+ 
+    
+3. $project: Reshaping Documents
+
+- When to Use: Use `$project` when you want to control which fields are returned in the output or to create new fields based on calculations.
+- Example: You want each document to only include `name` and a new field, `totalPrice`, calculated as `quantity * price`.
+    
+  
+    { $project: { name: 1, totalPrice: { $multiply: ["$quantity", "$price"] } } }
+    
+    
+    
+
+ 4. $sort: Sorting
+
+- When to Use: Use `$sort` to order your documents by one or more fields, either ascending (1) or descending (-1).
+- Example: You want to sort products by `price` in descending order.
+    
+   
+    
+    { $sort: { price: -1 } }
+    
+    
+    
+
+ 5. $limit: Limiting Results
+
+- When to Use: Use `$limit` to restrict the number of documents returned.
+- Example: You want only the top 5 most expensive products.
+    
+    
+    { $limit: 5 }
+    
+    ```
+    
+
+INDEXING :-
+
+Real-World Example
+
+Suppose you have a collection of student records, and you want to find students named “Alice.” Without an index on the `name` field, MongoDB must look through every document to find matches (which takes time if there are thousands of records). However, with an index on `name`, MongoDB can **jump straight to** the documents where `name = "Alice"`.
+
+Indexes are created on fields you frequently use in queries, like filtering by `status` or sorting by `amount`, making queries faster and more efficient.
+
+Types of Indexes :-
+
+- Single field: Index on one field.
+- Compound: Index on multiple fields.
+- Text: Supports text search.
+
+ a) Single Field Index
+
+To improve query performance on `status`, you can create an index on it.
+
+
+
+db.orders.createIndex({ status: 1 })
+
+
+
+- Explanation: This creates an ascending index on the `status` field, improving the performance of queries that filter or sort by `status`.
+
+ b) Compound Index on `status` and `amount`
+
+If you frequently filter by `status` and then sort by `amount`, a compound index on these fields would be helpful.
+
+
+
+db.orders.createIndex({ status: 1, amount: -1 })
+
+
+- Explanation: This index optimizes queries that filter by `status` and sort by `amount` in descending order. Compound indexes can improve performance for queries involving multiple fields.
+
+ c) Text Index on `customerName`
+
+If you want to search for specific customer names, a text index would help with partial and case-insensitive matches.
+
+db.orders.createIndex({ customerName: "text" })
+
+
+
+- Explanation: This index enables text search capabilities on the `customerName` field, allowing you to perform efficient text queries like searching for specific customer names.
+
+Important Notes :-
+
+A. Correct Syntax: { fieldName: order }
+
+- fieldName: The name of the field you want to index (e.g., `status`, `date`).
+- order: Either `1` (ascending) or `-1` (descending).
+
+B. Include the `date` Field(`date: 1`)
+
+- Setting `1` for a field in `$project` tells MongoDB to **include that field** in the resulting documents.
+- If a field is set to `0` (e.g., `date: 0`), MongoDB would exclude that field from the output.
+
+C. Is Aggregate a function or not?
+
+yes,  `aggregate` function is used to perform aggregation operations on a collection.

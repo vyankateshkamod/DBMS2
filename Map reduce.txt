@@ -1,0 +1,100 @@
+Code :-
+
+Inserting the data necessary 
+db.Stud.insertMany([
+{ Rollno: 1, Name: 'Ram', Marks: 80, Branch: 'Computer' },
+{ Rollno: 2, Name: 'Ravi', Marks: 90, Branch: 'Computer' },
+{ Rollno: 3, Name: 'Rahul', Marks: 70, Branch: 'IT' },
+{ Rollno: 4, Name: 'Sachin', Marks: 60, Branch: 'IT' }
+])
+
+Code for Calculating Total Marks
+
+db.Stud.mapReduce(
+  function () {     			//This is the map function.
+    emit(this.Branch, this.Marks);	//emit is a command that outputs key-value pairs.
+  },
+  function (key, values) {  		//This is the reduce function.
+    return Array.sum(values);		//It takes all the values for a single key (e.g., all marks for "CSE") and returns their sum.
+  },
+  {
+    query: { Marks: { $gt: 60 } },	//A filter condition to select only those students whose marks are greater than 60.
+    out: { replace: "Total_Marks" }	//Specifies the output collection.The result of mapReduce will be stored in a new collection named Total_Marks.
+  }
+);
+
+db.Total_Marks.find().pretty(); //.pretty() formats the output documents for easier reading.
+
+
+If you have inserted values many times and need fresh start use 
+db.Stud.deleteMany({});
+
+
+
+Code for Calculating Average Marks
+
+// MapReduce to calculate average marks per branch where Marks > 60
+db.Stud.mapReduce(
+  function () {
+    emit(this.Branch, this.Marks);  // Map: Branch as key, Marks as value
+  },
+  function (key, values) {
+    return Array.avg(values);       // Reduce: Average Marks per branch
+  },
+  {
+    query: { Marks: { $gt: 60 } },  // Filter: Only Marks > 60
+    out: { replace: "Avg_Marks" }   // Output collection
+  }
+);
+
+
+db.Avg_Marks.find().pretty();
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+### Concept :-
+
+MapReduce is a programming model used for processing large amounts of data by breaking it into smaller, manageable chunks. It works in two main steps: **Map** and **Reduce**.
+
+### How It Works: Simple Explanation
+
+1. **Map Step**: Think of this step as "sorting" or "grouping." Each piece of data (like a row in a table) is processed individually. In this step, you:
+    - Go through each piece of data.
+    - Extract the key (the category you want to group by) and its associated value (like a score, amount, or count).
+    - "Emit" or send out each key-value pair.
+    
+    For example, if you have data about student scores and you want to group by "Branch," the **Map step** would output pairs like:
+    
+    - `("Computer", 80)`
+    - `("Computer", 90)`
+    - `("IT", 70)`
+    - `("IT", 60)`
+2. **Reduce Step**: This step combines all values associated with each key. For each unique key, you:
+    - Take all values emitted by the Map step.
+    - Perform an operation on them, like summing, averaging, or finding the maximum.
+    
+    In the previous example, the **Reduce step** could sum the values:
+    
+    - `"Computer": 170` (80 + 90)
+    - `"IT": 130` (70 + 60)
+
+### Important Notes:-
+
+```
+emit(this.Branch, this.Marks);
+```
+
+A.
+
+- `emit` is a command that outputs key-value pairs.
+- `this.Branch` refers to the `Branch` field in each document (e.g., "Computer" or "IT"), which becomes the **key**.
+- `this.Marks` refers to the `Marks` field in each document, which becomes the **value**.
+- So, each document will output a pair like `("Computer", 80)` or `("IT", 70)`.
+
+B.   The `query` option specifies a filter to limit which documents from the collection are included in  the MapReduce operation
+
+C.  The `out` option specifies where to store the results of the MapReduce operation. It defines the name of the collection where the output will be saved. The results of the MapReduce  are stored in a collection called `Total_Marks` or `Avg_Marks`

@@ -1,0 +1,108 @@
+Note :-
+
+1. `Loan_Amount DECIMAL(10, 2)` `DECIMAL(10, 2)` - allows values up to **10 digits in total**, with **2 digits after the decimal point.**
+2. CREATE VIEW 
+
+       Syntax :-
+
+        CREATE VIEW *view_name* AS
+
+        SELECT *column1*, *column2*, ...
+
+        FROM *table_name*
+
+        WHERE *condition*;
+
+1. syntax for creating index 
+
+```sql
+CREATE INDEX index_name ON table_name (column1, column2, ...);
+
+```
+
+1. synonym - 
+- A synonym is an alias or alternative name for an object in a database. It allows users to reference a table, view, procedure, or another object by a different name, often to make queries simpler or more readable, or to abstract the object’s original name.
+- do not include just read
+
+
+CODE :-
+
+-- Part A: SQL DDL Statements (Table, View, Index, Synonym, Constraints)
+
+-- Create the Customer table
+CREATE TABLE Customer (
+    Account_no INT PRIMARY KEY,
+    Name VARCHAR(50) NOT NULL,
+    Balance DECIMAL(10, 2),
+    City VARCHAR(50)
+);
+
+-- Create the Loan table
+CREATE TABLE Loan (
+    Loan_no INT PRIMARY KEY,
+    Name VARCHAR(50) NOT NULL,
+    Loan_Amount DECIMAL(10, 2)
+);
+
+-- Insert records into the Customer table
+INSERT INTO Customer (Account_no, Name, Balance, City) VALUES
+(1, 'Ram', 10000, 'Pune'),
+(2, 'Ravi', 25000, 'Nashik'),
+(3, 'Sachin', 30000, 'Mumbai');
+
+-- Insert records into the Loan table
+INSERT INTO Loan (Loan_no, Name, Loan_Amount) VALUES
+(1, 'Ram', 10000),
+(2, 'Ravi', 50000),
+(4, 'Dipak', 40000);
+
+-- Create a view to display customers with a balance greater than 20000
+CREATE VIEW HighBalanceCustomers AS
+SELECT * FROM Customer WHERE Balance > 20000;
+
+-- Create a view to display customers from Nashik with a balance greater than 20000
+CREATE VIEW NashikHighBalanceCustomers AS
+SELECT * FROM Customer WHERE City = 'Nashik' AND Balance > 20000;
+
+-- Create an index on the Name column in Customer table
+CREATE INDEX idx_customer_name ON Customer (Name);
+
+-- Create a composite index on Account_no and Name columns in Customer table
+CREATE INDEX idx_account_name ON Customer (Account_no, Name);
+
+-- Create a synonym for the Loan table to use for calculating interest
+CREATE SYNONYM LoanSynonym FOR Loan;
+
+-- Part B: SQL DML Statements (Queries)
+
+-- 1) Select customers having an account or a loan in the bank
+SELECT Name FROM Customer
+UNION
+SELECT Name FROM Loan;
+
+-- 2) Select customers having both an account and a loan in the bank
+SELECT Name FROM Customer
+INTERSECT
+SELECT Name FROM Loan;
+
+-- 3) Select customers having an account in the bank but not a loan
+SELECT Name FROM Customer
+MINUS                       //if MINUS does't work use EXCEPT
+SELECT Name FROM Loan;
+
+-- 4) Display the HighBalanceCustomers view to see customers with a balance greater than 20000
+SELECT * FROM HighBalanceCustomers;
+
+-- 5) Display the NashikHighBalanceCustomers view for customers from Nashik with a balance greater than 20000
+SELECT * FROM NashikHighBalanceCustomers;
+
+-- 6) Display Customers in ascending order of Balance
+SELECT * FROM Customer ORDER BY Balance ASC;
+
+-- 7) Display borrowers in descending order of Loan_Amount
+SELECT * FROM Loan ORDER BY Loan_Amount DESC;
+
+-- 8) Calculate and display interest on given loan for 20 years using the LoanSynonym
+-- Assuming a fixed interest rate of 5%
+SELECT Name, Loan_Amount, (Loan_Amount * POWER(1 + 0.05, 20)) - Loan_Amount AS Interest
+FROM LoanSynonym;

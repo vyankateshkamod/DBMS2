@@ -1,0 +1,69 @@
+DELIMITER //  - Start of a stored procedure (A **stored procedure** in PL/SQL is a **named block of code** that performs a specific task and is **stored in the database** so it can be reused and executed multiple times.)
+
+// - Indicates end of stored procedure
+
+1. Table Creation: create a table named `AREAS` with columns for `RADIUS` and `AREA`:
+
+CREATE TABLE AREAS(RADIUS INT, AREA FLOAT);
+
+
+2. Stored Procedure: You defined a stored procedure FIND_CIRCLE_AREA that calculates the area for each radius and inserts it into the AREAS table
+
+DROP PROCEDURE IF ALREADY EXISTS FIND_CIRCLE_AREA()  //from file
+
+delimiter //  //from file
+
+CREATE PROCEDURE FIND_CIRCLE_AREA()
+BEGIN  //BEGIN marks the start of the procedure’s main code block.
+    DECLARE  R INT;
+    DECLARE A FLOAT;
+    SET R = 5;
+    loop_LABEL: LOOP`       //Starts a labeled loop called `loop_LABEL`.
+        `IF R > 9 THEN
+            LEAVE loop_LABEL;
+        END IF;
+        SET A = 3.14 * R * R;
+        INSERT INTO AREAS(RADIUS, AREA) VALUES(R, A);
+        SET R = R + 1;
+    END LOOP;
+END;
+
+//   //end of procedure
+
+3. Procedure Execution: You called the procedure to perform the calculations:
+delimiter ;  //After procedure creation is complete, you switch back to ; so regular SQL commands (like CALL) work as expected.
+CALL FIND_CIRCLE_AREA();  
+
+4. Results Retrieval: Finally,  retrieved the results (printed)  from the `AREAS` table:   
+SELECT * FROM AREAS;
+
+-----------------------------------------------------------------------------------------------------------
+CODE :-
+
+CREATE TABLE AREAS(RADIUS INT, AREA FLOAT);
+
+DROP PROCEDURE IF ALREADY EXISTS FIND_CIRCLE_AREA()
+
+delimiter //  
+
+CREATE PROCEDURE FIND_CIRCLE_AREA()
+BEGIN  
+    DECLARE  R INT;
+    DECLARE A FLOAT;
+    SET R = 5;
+    loop_LABEL: LOOP       
+        IF R > 9 THEN
+            LEAVE loop_LABEL;
+        END IF;
+        SET A = 3.14 * R * R;
+        INSERT INTO AREAS(RADIUS, AREA) VALUES(R, A);
+        SET R = R + 1;
+    END LOOP;
+END;
+
+//
+
+delimiter ;  
+CALL FIND_CIRCLE_AREA();       
+
+SELECT * FROM AREAS;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          

@@ -1,0 +1,257 @@
+-- Step 1: Create Table with Primary Key Constraint
+CREATE TABLE Student_Mark (
+    Rollno INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Marks INT,
+    Branch VARCHAR(50)
+);
+
+-- Step 2: Insert Data into Student_Mark Table
+INSERT INTO Student_Mark (Rollno, Name, Marks, Branch) VALUES
+(1, 'Ravi', 90, 'Computer'),
+(2, 'Vedika', 70, 'Computer'),
+(3, 'Aarush', 95, 'IT'),
+(4, 'Jyoti', 60, 'IT');
+
+-- Query 1: Display Students Having Marks Above 70
+SELECT * FROM Student_Mark
+WHERE Marks > 70;
+
+-- Query 2: Display Students Having Marks Below 70
+SELECT * FROM Student_Mark
+WHERE Marks < 70;
+
+-- Query 3: Display Students Having Marks Equal to 70 and Name is Vedika
+SELECT * FROM Student_Mark
+WHERE Marks = 70 AND Name = 'Vedika';
+
+-- Query 4: Change Student Name from Ravi to Sachin
+UPDATE Student_Mark
+SET Name = 'Sachin'
+WHERE Name = 'Ravi';
+
+-- Query 5: Delete Student Whose Name is Aarush
+DELETE FROM Student_Mark
+WHERE Name = 'Aarush';
+
+-- Query 6: Function to Display Student Having Maximum Mark 
+CREATE FUNCTION GetMaxMarkStudent()  //alternative
+RETURNS TABLE
+AS //function defination begins here 
+RETURN (
+    SELECT TOP 1 * FROM Student_Mark
+    ORDER BY Marks DESC
+);
+-- Call the function
+SELECT * FROM GetMaxMarkStudent();
+
+-- Query 7: Display Minimum, Maximum, Average, Sum, Total Count of Marks for Each Branch
+SELECT Branch,
+    MIN(Marks) AS Minimum_Marks,
+    MAX(Marks) AS Maximum_Marks,
+    AVG(Marks) AS Average_Marks,
+    SUM(Marks) AS Total_Marks,
+    COUNT(*) AS Total_Students
+FROM Student_Mark
+GROUP BY Branch;
+
+-- Query 8: Display Students and their Marks along with Average Marks per Branch using JOIN
+-- Assume we create a view with branch averages
+CREATE VIEW Branch_Avg_Marks AS
+SELECT Branch, AVG(Marks) AS Avg_Marks
+FROM Student_Mark
+GROUP BY Branch;
+
+SELECT sm.Rollno, sm.Name, sm.Marks, sm.Branch, bam.Avg_Marks
+FROM Student_Mark sm
+JOIN Branch_Avg_Marks bam ON sm.Branch = bam.Branch;
+
+-- Query 9: Display Students Whose Marks are Above the Branch Average using Subquery
+SELECT Rollno, Name, Marks, Branch
+FROM Student_Mark
+WHERE Marks > (SELECT AVG(Marks) FROM Student_Mark WHERE Branch = Student_Mark.Branch);
+
+-- Query 10: Use INNER JOIN, LEFT JOIN, and RIGHT JOIN
+-- Create another table for demonstration (e.g., Branch_Details)
+CREATE TABLE Branch_Details (
+    Branch VARCHAR(50) PRIMARY KEY,
+    Branch_Head VARCHAR(50)
+);
+
+-- Insert Data into Branch_Details Table
+INSERT INTO Branch_Details (Branch, Branch_Head) VALUES
+('Computer', 'Dr. Sharma'),
+('IT', 'Dr. Verma'),
+('Mechanical', 'Dr. Singh');
+
+-- INNER JOIN: Display Students with Branch Head Information
+SELECT sm.Rollno, sm.Name, sm.Branch, bd.Branch_Head
+FROM Student_Mark sm
+INNER JOIN Branch_Details bd ON sm.Branch = bd.Branch;
+
+-- LEFT JOIN: Display All Students with Branch Head (if exists)
+SELECT sm.Rollno, sm.Name, sm.Branch, bd.Branch_Head
+FROM Student_Mark sm
+LEFT JOIN Branch_Details bd ON sm.Branch = bd.Branch;
+
+-- RIGHT JOIN: Display All Branches with Student Information (if exists)
+SELECT sm.Rollno, sm.Name, sm.Branch, bd.Branch_Head
+FROM Student_Mark sm
+RIGHT JOIN Branch_Details bd ON sm.Branch = bd.Branch;
+
+
+
+//alternative  - query6
+DELIMITER //
+
+CREATE PROCEDURE GetMaxMarkStudent()
+BEGIN
+    SELECT * FROM Student_Mark
+    ORDER BY Marks DESC
+    LIMIT 1;
+END;
+//
+
+DELIMITER ;
+
+CALL GetMaxMarkStudent();
+
+--------------------------------------------------------------------------
+ 1. JOIN
+
+JOIN is used to combine rows from two or more tables based on a related column between them. This is helpful when data is spread across multiple tables, allowing you to see a comprehensive view of related data.
+
+ Types of JOINs:
+
+1. INNER JOIN: Returns only the rows that have matching values in both tables.
+2. LEFT JOIN (or LEFT OUTER JOIN): Returns all rows from the left table and matching rows from the right table. If there's no match, NULLs are returned for columns from the right table.
+3. RIGHT JOIN (or RIGHT OUTER JOIN): Returns all rows from the right table and matching rows from the left table. If there's no match, NULLs are returned for columns from the left table.
+4. FULL JOIN (or FULL OUTER JOIN): Returns all rows when there is a match in either the left or right table. If there's no match, NULLs are returned for missing matches on both sides
+
+Example:
+
+Suppose we have two tables:
+
+1. Student_Mark:
+    - Rollno, Name, Marks, Branch
+2. Branch_Details:
+    - Branch, Branch_Head
+
+
+-- INNER JOIN: Show students along with their branch heads.
+SELECT sm.Rollno, sm.Name, sm.Marks, sm.Branch, bd.Branch_Head
+FROM Student_Mark sm
+INNER JOIN Branch_Details bd ON sm.Branch = bd.Branch;
+
+
+
+In this example, **only students whose branches have a match in the `Branch_Details` table** will be returned.
+
+ 2. Sub-Query
+
+A **Sub-Query** is a query nested inside another query. Sub-queries allow you to fetch data based on a condition or computation derived from another set of data.
+the sub-query `(SELECT AVG(Marks) FROM Student_Mark WHERE Branch = Student_Mark.Branch)` calculates the average marks for each branch, and the main query uses this to filter students with above-average marks in their branch.
+
+Types of Sub-Queries:
+
+1.Single-row sub-query: Returns a single row of results.
+2. Multi-row sub-query: Returns multiple rows and can be used with `IN`, `ANY`, `ALL`, etc.
+3.Correlated sub-query: Refers to columns in the outer query and is re-evaluated for each row processed by the outer query.
+
+Example:
+
+Retrieve students whose marks are above the average marks in their branch.
+
+
+
+SELECT Rollno, Name, Marks, Branch
+FROM Student_Mark
+WHERE Marks > (SELECT AVG(Marks) FROM Student_Mark WHERE Branch = Student_Mark.Branch);
+
+
+
+Here, the sub-query `(SELECT AVG(Marks) FROM Student_Mark WHERE Branch = Student_Mark.Branch)` calculates the average marks for each branch, and the main query uses this to filter students with above-average marks in their branch.
+
+3. View
+
+A **View** is a virtual table created based on a SQL query. Views don’t store data themselves but provide a saved query that can pull data from one or more tables dynamically. They are helpful for simplifying complex queries, ensuring security (limiting access to specific columns or rows), and encapsulating frequently-used queries.
+
+CREATE VIEW *view_name* AS
+
+SELECT *column1*, *column2*, ...
+
+FROM *table_name*
+
+WHERE *condition*;
+
+---
+
+ 1. Primary Key
+
+- Uniquely identifies each record in a table.
+- Cannot contain `NULL` values.
+- A table can have only one primary key.
+
+ Example:
+
+In a `Student` table:
+
+
+CREATE TABLE Student (
+    Rollno INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Age INT
+);
+
+
+
+Here, `Rollno` is the primary key, uniquely identifying each student.
+
+ 2. Foreign Key
+
+- Links two tables by establishing a relationship.
+- Allows `NULL` values (optional).
+- Enforces referential integrity by ensuring the existence of related data in both tables.
+
+ Example:
+
+Suppose we have two tables, `Student` and `Course`:
+
+
+CREATE TABLE Course (
+    CourseID INT PRIMARY KEY,
+    CourseName VARCHAR(50)
+);
+
+CREATE TABLE Student (
+    Rollno INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Age INT,
+    CourseID INT,
+    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
+);
+
+
+
+In this case, `CourseID` in the `Student` table is a **foreign key** that refers to `CourseID` in the `Course` table.
+
+3. Candidate Key
+
+- Must be unique for all rows in the table.
+- Cannot contain `NULL` values.
+- A table can have multiple candidate keys, but only one can be the primary key.
+
+Example:
+
+CREATE TABLE Employee (
+    EmployeeID INT,
+    SSN CHAR(11),
+    Name VARCHAR(50),
+    PRIMARY KEY (EmployeeID)
+);
+
+
+
+Here, `EmployeeID` and `SSN` are both candidate keys, but only `EmployeeID` is chosen as the primary key.
+
+4. **Super Key**: A set of one or more columns that uniquely identifies rows, but may contain extra columns.

@@ -1,0 +1,149 @@
+mysql> use student_db;
+Database changed
+mysql> CREATE TABLE Student_Mark ( Rollno INT PRIMARY KEY,  Name VARCHAR(50),  Marks INT,Branch VARCHAR(50));
+Query OK, 0 rows affected (0.05 sec)
+
+mysql> INSERT INTO Student_Mark (Rollno, Name, Marks, Branch) VALUES (1, 'Ravi', 90, 'Computer'),(2, 'Vedika', 70, 'Computer'),(3, 'Aarush', 95, 'IT'),(4, 'Jyoti', 60, 'IT');
+Query OK, 4 rows affected (0.01 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+mysql> SELECT * FROM Student_Mark
+    -> WHERE Marks > 70;
++--------+--------+-------+----------+
+| Rollno | Name   | Marks | Branch   |
++--------+--------+-------+----------+
+|      1 | Ravi   |    90 | Computer |
+|      3 | Aarush |    95 | IT       |
++--------+--------+-------+----------+
+2 rows in set (0.00 sec)
+
+mysql> SELECT * FROM Student_Mark
+    -> WHERE Marks < 70;
++--------+-------+-------+--------+
+| Rollno | Name  | Marks | Branch |
++--------+-------+-------+--------+
+|      4 | Jyoti |    60 | IT     |
++--------+-------+-------+--------+
+1 row in set (0.00 sec)
+
+mysql> SELECT * FROM Student_Mark
+    -> WHERE Marks = 70 AND Name = 'Vedika';
++--------+--------+-------+----------+
+| Rollno | Name   | Marks | Branch   |
++--------+--------+-------+----------+
+|      2 | Vedika |    70 | Computer |
++--------+--------+-------+----------+
+1 row in set (0.00 sec)
+
+mysql> UPDATE Student_Mark
+    -> SET Name = 'Sachin'
+    -> WHERE Name = 'Ravi';
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> DELETE FROM Student_Mark
+    -> WHERE Name = 'Aarush';
+Query OK, 1 row affected (0.01 sec)
+
+mysql> DELIMITER //
+mysql> CREATE PROCEDURE GetMaxMarkStudent()
+    -> BEGIN
+    -> SELECT * FROM Student_Mark
+    -> ORDER BY Marks DESC
+    -> LIMIT 1;
+    -> END;
+    -> //
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> DELIMITER ;
+mysql> CALL GetMaxMarkStudent();
++--------+--------+-------+----------+
+| Rollno | Name   | Marks | Branch   |
++--------+--------+-------+----------+
+|      1 | Sachin |    90 | Computer |
++--------+--------+-------+----------+
+1 row in set (0.00 sec)
+
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> SELECT Branch,MIN(Marks) AS Minimum_Marks, MAX(Marks) AS Maximum_Marks,AVG(Marks) AS Average_Marks,SUM(Marks) AS Total_Marks,COUNT(*) AS Total_Students FROM Student_Mark GROUP BY Branch;
++----------+---------------+---------------+---------------+-------------+----------------+
+| Branch   | Minimum_Marks | Maximum_Marks | Average_Marks | Total_Marks | Total_Students |
++----------+---------------+---------------+---------------+-------------+----------------+
+| Computer |            70 |            90 |       80.0000 |         160 |              2 |
+| IT       |            60 |            60 |       60.0000 |          60 |              1 |
++----------+---------------+---------------+---------------+-------------+----------------+
+2 rows in set (0.01 sec)
+
+mysql> CREATE VIEW Branch_Avg_Marks AS
+    -> SELECT Branch, AVG(Marks) AS Avg_Marks
+    -> FROM Student_Mark
+    -> GROUP BY Branch;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> SELECT sm.Rollno, sm.Name, sm.Marks, sm.Branch, bam.Avg_Marks
+    -> FROM Student_Mark sm
+    -> JOIN Branch_Avg_Marks bam ON sm.Branch = bam.Branch;
++--------+--------+-------+----------+-----------+
+| Rollno | Name   | Marks | Branch   | Avg_Marks |
++--------+--------+-------+----------+-----------+
+|      1 | Sachin |    90 | Computer |   80.0000 |
+|      2 | Vedika |    70 | Computer |   80.0000 |
+|      4 | Jyoti  |    60 | IT       |   60.0000 |
++--------+--------+-------+----------+-----------+
+3 rows in set (0.01 sec)
+
+mysql> SELECT Rollno, Name, Marks, Branch
+    -> FROM Student_Mark
+    -> WHERE Marks > (SELECT AVG(Marks) FROM Student_Mark
+    -> WHERE Branch = Student_Mark.Branch);
++--------+--------+-------+----------+
+| Rollno | Name   | Marks | Branch   |
++--------+--------+-------+----------+
+|      1 | Sachin |    90 | Computer |
++--------+--------+-------+----------+
+1 row in set (0.00 sec)
+
+mysql> CREATE TABLE Branch_Details (Branch VARCHAR(50) PRIMARY KEY, Branch_Head VARCHAR(50));
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> INSERT INTO Branch_Details (Branch, Branch_Head) VALUES ('Computer', 'Dr. Sharma'),('IT', 'Dr. Verma'),('Mechanical', 'Dr. Singh');
+Query OK, 3 rows affected (0.01 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+
+mysql> SELECT sm.Rollno, sm.Name, sm.Branch, bd.Branch_Head
+    -> FROM Student_Mark sm
+    -> INNER JOIN Branch_Details bd ON sm.Branch = bd.Branch;
++--------+--------+----------+-------------+
+| Rollno | Name   | Branch   | Branch_Head |
++--------+--------+----------+-------------+
+|      1 | Sachin | Computer | Dr. Sharma  |
+|      2 | Vedika | Computer | Dr. Sharma  |
+|      4 | Jyoti  | IT       | Dr. Verma   |
++--------+--------+----------+-------------+
+3 rows in set (0.00 sec)
+
+mysql> SELECT sm.Rollno, sm.Name, sm.Branch, bd.Branch_Head
+    -> FROM Student_Mark sm
+    -> LEFT JOIN Branch_Details bd ON sm.Branch = bd.Branch;
++--------+--------+----------+-------------+
+| Rollno | Name   | Branch   | Branch_Head |
++--------+--------+----------+-------------+
+|      1 | Sachin | Computer | Dr. Sharma  |
+|      2 | Vedika | Computer | Dr. Sharma  |
+|      4 | Jyoti  | IT       | Dr. Verma   |
++--------+--------+----------+-------------+
+3 rows in set (0.00 sec)
+
+mysql> SELECT sm.Rollno, sm.Name, sm.Branch, bd.Branch_Head
+    -> FROM Student_Mark sm
+    -> RIGHT JOIN Branch_Details bd ON sm.Branch = bd.Branch;
++--------+--------+----------+-------------+
+| Rollno | Name   | Branch   | Branch_Head |
++--------+--------+----------+-------------+
+|      2 | Vedika | Computer | Dr. Sharma  |
+|      1 | Sachin | Computer | Dr. Sharma  |
+|      4 | Jyoti  | IT       | Dr. Verma   |
+|   NULL | NULL   | NULL     | Dr. Singh   |
++--------+--------+----------+-------------+
+4 rows in set (0.00 sec)

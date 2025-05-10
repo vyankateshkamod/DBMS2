@@ -1,0 +1,152 @@
+
+-- Step 1: Create the tables
+CREATE TABLE studmarks (
+    rollno INT PRIMARY KEY,
+    name VARCHAR(20) NOT NULL,
+);
+
+CREATE TABLE res (
+    rollno INT PRIMARY KEY,
+    name VARCHAR(20) NOT NULL,
+    class VARCHAR(20) NOT NULL
+);
+
+-- Step 2: Create the function func_class to categorize the student based on marks
+DELIMITER //
+CREATE FUNCTION func_class(marks INT)
+RETURNS VARCHAR(20) DETERMINISTIC
+BEGIN
+    DECLARE returnStatement VARCHAR(20);
+
+    -- Categorize based on provided ranges
+    IF marks <= 1500 AND marks >= 990 THEN
+        SET returnStatement = "Distinction";
+    ELSEIF marks <= 989 AND marks >= 900 THEN
+        SET returnStatement = "First Class";
+    ELSEIF marks <= 899 AND marks >= 825 THEN
+        SET returnStatement = "Higher Second Class";
+    ELSE
+        SET returnStatement = "No Category"; -- For marks outside specified ranges
+    END IF;
+
+    RETURN returnStatement;
+END;
+//
+DELIMITER ;
+
+-- Step 3: Create the stored procedure proc_grade to insert the categorized result into the res table
+DELIMITER //
+CREATE PROCEDURE proc_grade(roll INT)
+BEGIN
+    DECLARE s_name VARCHAR(20);
+    DECLARE t_marks INT;
+    DECLARE s_class VARCHAR(20);
+
+    -- Handle case if roll number is not found
+    DECLARE CONTINUE HANDLER FOR NOT FOUND
+        SET s_name = NULL;
+
+    -- Fetch the student's name and total marks
+    SELECT name, totalmarks INTO s_name, t_marks --Fetches the student’s name and total marks from studmarks and stores into variables.
+    FROM studmarks
+    WHERE rollno = roll;
+
+    -- If roll number exists, categorize and insert the result
+    IF s_name IS NOT NULL THEN
+        SET s_class = func_class(t_marks);
+        INSERT INTO res (rollno, name, class) VALUES (roll, s_name, s_class);
+    END IF;
+END;  --Ends the function and restores the normal delimiter.
+//
+DELIMITER ;
+
+-- Step 4: Test the procedure by inserting a student's data and calling proc_grade
+-- Sample data insertion
+INSERT INTO studmarks VALUES (101, 'Priti', 1450),
+                             (102, 'Ritika', 970),
+                             (103, 'Pratiksha', 860),
+                             (104, 'Minu', 830);
+
+-- Execute the procedure for each student
+CALL proc_grade(101);
+CALL proc_grade(102);
+CALL proc_grade(103);
+CALL proc_grade(104);
+
+-- Verify the results
+SELECT * FROM res;
+---------------------------------------------------------------------------------------------------------------
+Step1 :-
+
+1. NOT NULL - You cannot insert a row without providing a value for name.
+2. **`VARCHAR`** = Variable-length string
+
+Step2 :-
+
+1. define a function `func_class` which takes `marks` as input.
+2. `DETERMINISTIC`: The same input always gives the same output.
+3. Declares a variable to hold the final return value.
+
+Step3 :-
+
+1. You define a **stored procedure** `proc_grade` that takes a student's roll number.
+2. If no record is found for the given roll number, sets `s_name` to `NULL` instead of stopping execution with an error.
+3. SET s_class = func_class(t_marks);
+- t_marks- is a variable holding the **student's total marks** (fetched earlier).
+- func_class()- is a **user-defined function** that takes marks and returns a **classification** (like `'Distinction'`, `'First Class'`, etc.).
+- s_class - is a variable that will now hold that classification.
+
+-----------------------------------------------------------------------------------------------------------------
+Algorithm
+Step 1: Create Tables
+1. Create a table studmarks with:
+
+rollno (primary key),
+
+name,
+
+totalmarks.
+
+2. Create another table res to store results with:
+
+rollno,
+
+name,
+
+class.
+
+Step 2: Define Function func_class(marks)
+3. Input: marks (integer)
+
+4. Based on marks, return a class:
+
+If 990 ≤ marks ≤ 1500 → return "Distinction"
+
+Else if 900 ≤ marks ≤ 989 → return "First Class"
+
+Else if 825 ≤ marks ≤ 899 → return "Higher Second Class"
+
+Else → return "No Category"
+
+Step 3: Define Stored Procedure proc_grade(roll)
+5. Input: roll (student's roll number)
+
+6. Fetch name and totalmarks from studmarks where rollno = roll
+
+7. If no record found → do nothing
+
+8. Else:
+
+Call func_class(totalmarks) to get class
+
+Insert into res table: roll, name, and class
+
+Step 4: Insert Data and Execute
+9. Insert student records into studmarks
+
+10. For each student:
+
+Call proc_grade(rollno)
+
+11. View final categorized result using:
+SELECT * FROM res;
